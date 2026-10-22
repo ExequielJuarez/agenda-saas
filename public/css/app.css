@@ -111,6 +111,13 @@ td .sub { font-size: 0.8rem; color: var(--muted); }
 .chip.day { display: grid; justify-items: center; line-height: 1.15; padding: 8px 12px; min-width: 58px; }
 .chip.day small { font-size: 0.68rem; opacity: 0.8; text-transform: uppercase; }
 .chip:disabled { opacity: 0.35; }
+.svc-opt { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); color: var(--fg); transition: transform 140ms var(--ease-out), border-color 160ms ease, background-color 160ms ease; user-select: none; -webkit-user-select: none; }
+.svc-opt:active { transform: scale(0.98); }
+.svc-opt.on { border-color: var(--violet); background: color-mix(in srgb, var(--violet) 10%, var(--card)); box-shadow: 0 0 0 1px var(--violet); }
+.svc-opt .svc-info { display: grid; gap: 2px; }
+.svc-opt small { color: var(--muted); font-size: 0.82rem; font-weight: 400; }
+.svc-opt strong { font: 700 1.05rem var(--font-display); white-space: nowrap; }
+@media (hover: hover) and (pointer: fine) { .svc-opt:hover:not(.on) { border-color: var(--violet); } }
 .err { color: var(--danger); min-height: 1.2em; margin: 0; font-size: 0.9rem; }
 
 dialog { border: 1px solid var(--line); border-radius: 20px; background: var(--card); color: var(--fg); padding: 22px; width: min(460px, calc(100% - 24px)); max-height: 90dvh; overflow-y: auto; overscroll-behavior: contain; }

@@ -10,6 +10,7 @@ module.exports = (sequelize, DataTypes) => {
       password_hash: { type: DataTypes.STRING(100), allowNull: false },
       precio: { type: DataTypes.INTEGER, allowNull: false },
       link_pago: { type: DataTypes.STRING(300), allowNull: false, defaultValue: "" },
+      whatsapp: { type: DataTypes.STRING(30), allowNull: false, defaultValue: "" }, // WhatsApp del negocio, para recibir reservas
       suspendido: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
       vence: { type: DataTypes.DATEONLY, allowNull: false }, // hasta cuándo está pago
       // Días, horario, duración de turnos y servicios (JSON en texto, compatible con MySQL y MariaDB)
@@ -30,6 +31,7 @@ module.exports = (sequelize, DataTypes) => {
   Negocio.associate = (db) => {
     Negocio.hasMany(db.Pago, { foreignKey: "negocio_id", onDelete: "CASCADE" });
     Negocio.hasMany(db.Turno, { foreignKey: "negocio_id", onDelete: "CASCADE" });
+    Negocio.hasMany(db.Servicio, { foreignKey: "negocio_id", onDelete: "CASCADE" });
   };
   return Negocio;
 };

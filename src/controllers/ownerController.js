@@ -9,7 +9,7 @@ const { registrarFallo, limpiarFallos } = require("../middlewares/auth");
 const sha = (s) => crypto.createHash("sha256").update(String(s)).digest();
 const slugify = (s) =>
   s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "negocio";
-const ajustesIniciales = () => ({ days: [1, 2, 3, 4, 5, 6], from: "09:00", to: "18:00", step: 30, services: ["Turno general"] });
+const ajustesIniciales = () => ({ days: [1, 2, 3, 4, 5, 6], from: "09:00", to: "18:00", step: 30 });
 
 const conSuscripcion = async (negocio) => suscripcion.aJson(negocio, await suscripcion.suscripcionDe(negocio));
 
@@ -46,6 +46,8 @@ module.exports = {
       precio: Number(req.body.price) > 0 ? Math.round(Number(req.body.price)) : agendo.precio,
       link_pago: payLink || "", vence: suscripcion.sumarDias(suscripcion.hoy(), agendo.diasPrueba), ajustes: ajustesIniciales(),
     });
+    // Servicio de arranque: el cliente lo edita o agrega los suyos desde su panel
+    await db.Servicio.create({ negocio_id: negocio.id, categoria: "General", nombre: "Turno general", precio: 0, minutos: 30 });
     res.status(201).json({ tenant: await conSuscripcion(negocio) });
   },
 

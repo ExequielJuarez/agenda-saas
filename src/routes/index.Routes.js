@@ -23,12 +23,12 @@ router.get("/api/config", (req, res) =>
 const publico = express.Router({ mergeParams: true });
 publico.use(negocioPublico);
 publico.get("/", publicController.info);
-publico.get("/slots", query("date").matches(FECHA).withMessage("Fecha inválida"), validar, publicController.horarios);
+publico.get("/slots", query("date").matches(FECHA).withMessage("Fecha inválida"), query("service").optional({ values: "falsy" }).isInt().withMessage("Servicio inválido"), validar, publicController.horarios);
 publico.post(
   "/book",
   body("name").trim().notEmpty().withMessage("Completá tu nombre").isLength({ max: 80 }).withMessage("Nombre demasiado largo"),
   body("phone").trim().custom((v) => String(v).replace(/\D/g, "").length >= 8).withMessage("Ingresá un teléfono válido"),
-  body("service").trim().notEmpty().withMessage("Elegí un servicio"),
+  body("serviceId").isInt().withMessage("Elegí un servicio"),
   body("date").matches(FECHA).withMessage("Fecha inválida"),
   body("time").matches(/^\d{2}:\d{2}$/).withMessage("Hora inválida"),
   validar,

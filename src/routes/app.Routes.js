@@ -26,12 +26,13 @@ router.get("/me", appController.me);
 router.use(suscripcionActiva);
 router.get("/appointments", appController.turnos);
 router.get("/stats", appController.estadisticas);
-router.get("/slots", query("date").matches(FECHA).withMessage("Fecha inválida"), validar, appController.horarios);
+router.get("/slots", query("date").matches(FECHA).withMessage("Fecha inválida"), query("service").optional({ values: "falsy" }).isInt().withMessage("Servicio inválido"), validar, appController.horarios);
 router.post(
   "/appointments",
   body("name").trim().notEmpty().withMessage("Completá el nombre del cliente").isLength({ max: 80 }).withMessage("Nombre demasiado largo"),
   body("date").matches(FECHA).withMessage("Fecha inválida"),
   body("time").matches(HORA).withMessage("Elegí un horario"),
+  body("serviceId").optional({ values: "falsy" }).isInt().withMessage("Servicio inválido"),
   validar,
   appController.crearTurno
 );
@@ -44,9 +45,23 @@ router.put(
   body("from").matches(HORA).withMessage("Horario inválido"),
   body("to").matches(HORA).custom((to, { req }) => aMin(to) > aMin(req.body.from)).withMessage("Horario inválido"),
   body("step").isIn([15, 20, 30, 45, 60].map(String)).withMessage("Duración inválida"),
-  body("services").isArray().withMessage("Servicios inválidos"),
+  body("whatsapp").optional().isLength({ max: 30 }).withMessage("WhatsApp demasiado largo"),
   validar,
   appController.guardarAjustes
 );
+
+// Servicios y categorías del negocio
+const servicio = [
+  body("name").trim().notEmpty().withMessage("Poné el nombre del servicio").isLength({ max: 80 }).withMessage("Nombre demasiado largo"),
+  body("category").optional().isLength({ max: 60 }).withMessage("Categoría demasiado larga"),
+  body("price").optional({ values: "falsy" }).isInt({ min: 0, max: 100000000 }).withMessage("Precio inválido"),
+  body("minutes").isInt({ min: 5, max: 600 }).withMessage("Duración inválida (entre 5 y 600 minutos)"),
+  body("desc").optional().isLength({ max: 300 }).withMessage("La descripción puede tener hasta 300 caracteres"),
+  validar,
+];
+router.get("/services", appController.servicios);
+router.post("/services", servicio, appController.crearServicio);
+router.put("/services/:id", param("id").isInt().withMessage("Servicio inválido"), servicio, appController.editarServicio);
+router.delete("/services/:id", param("id").isInt().withMessage("Servicio inválido"), validar, appController.borrarServicio);
 
 module.exports = router;

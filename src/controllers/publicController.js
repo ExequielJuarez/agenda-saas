@@ -2,19 +2,20 @@
 const agenda = require("../services/agendaService");
 
 module.exports = {
-  info(req, res) {
-    res.json({ name: req.negocio.nombre, services: req.negocio.ajustes.services });
+  async info(req, res) {
+    const servicios = await agenda.serviciosActivos(req.negocio);
+    res.json({ name: req.negocio.nombre, whatsapp: req.negocio.whatsapp, services: servicios.map(agenda.servicioJson) });
   },
 
   async horarios(req, res) {
-    res.json({ times: await agenda.horasLibres(req.negocio, req.query.date) });
+    res.json({ times: await agenda.horasLibres(req.negocio, req.query.date, req.query.service) });
   },
 
   async reservar(req, res) {
-    const { name, phone, service, date, time } = req.body;
+    const { name, phone, serviceId, date, time } = req.body;
     try {
-      await agenda.crearTurno(req.negocio, { nombre: name, telefono: phone, servicio: service, fecha: date, hora: time }, { origen: "web", estado: "pending", soloLibres: true });
-      res.status(201).json({ ok: true });
+      const turno = await agenda.crearTurno(req.negocio, { nombre: name, telefono: phone, servicioId: serviceId, fecha: date, hora: time }, { origen: "web", estado: "pending", soloLibres: true });
+      res.status(201).json({ ok: true, booking: { service: turno.servicio, price: turno.precio, date: turno.fecha, time: turno.hora } });
     } catch (err) {
       if (err.status) return res.status(err.status).json({ error: err.message });
       throw err;

@@ -10,7 +10,8 @@ const config = require("../src/model/database/config/config")[process.env.NODE_E
   await conexion.end();
 
   const db = require("../src/model/database/models");
-  await db.sequelize.sync();
+  // alter: agrega columnas nuevas si actualizaste el proyecto (no borra datos)
+  await db.sequelize.sync({ alter: true });
   console.log(`✅ Base "${config.database}" lista. Iniciá el servidor con: npm start`);
   console.log("   Entrá a /owner con tu OWNER_PASSWORD y creá tu primer cliente.");
   await db.sequelize.close();

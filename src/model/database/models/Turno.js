@@ -9,6 +9,8 @@ module.exports = (sequelize, DataTypes) => {
       servicio: { type: DataTypes.STRING(80), allowNull: false },
       fecha: { type: DataTypes.DATEONLY, allowNull: false },
       hora: { type: DataTypes.STRING(5), allowNull: false },
+      duracion: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 30 }, // minutos que ocupa
+      precio: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 }, // precio del servicio al momento de reservar
       estado: { type: DataTypes.ENUM("pending", "confirmed", "done", "cancelled"), allowNull: false, defaultValue: "pending" },
       origen: { type: DataTypes.ENUM("web", "manual"), allowNull: false, defaultValue: "web" },
     },
