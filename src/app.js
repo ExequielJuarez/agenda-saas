@@ -54,6 +54,11 @@ db.sequelize
     console.log(`✅ Conectado a la base de datos "${db.sequelize.config.database}"`);
     app.listen(puerto, () => console.log(`🚀 Servidor Express corriendo en http://localhost:${puerto}  (dueño: /owner · clientes: /app)`));
     if (!process.env.OWNER_PASSWORD) console.log("⚠️  Definí OWNER_PASSWORD en el .env (ahora usa la contraseña por defecto).");
+    console.log(
+      require("./services/recordatorioService").programar()
+        ? "📨 Recordatorios automáticos por WhatsApp activados (los clientes que lo prendan en Ajustes)"
+        : "📨 Recordatorios automáticos desactivados (sin WA_TOKEN / WA_PHONE_ID). Los recordatorios manuales funcionan igual."
+    );
   })
   .catch((error) => {
     console.error("❌ No se pudo conectar con la base de datos:", error.message);

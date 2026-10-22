@@ -39,6 +39,10 @@ router.post(
 const id = param("id").isInt().withMessage("Turno inválido");
 router.patch("/appointments/:id", id, body("status").isIn(["pending", "confirmed", "done", "cancelled"]).withMessage("Estado inválido"), validar, appController.cambiarEstado);
 router.delete("/appointments/:id", id, validar, appController.borrarTurno);
+
+// Recordatorios por WhatsApp
+router.get("/reminders", appController.recordatorios);
+router.post("/appointments/:id/reminded", id, body("sent").optional().isBoolean().withMessage("Valor inválido"), validar, appController.marcarRecordatorio);
 router.put(
   "/settings",
   body("days").isArray().withMessage("Elegí los días de atención"),
@@ -46,6 +50,8 @@ router.put(
   body("to").matches(HORA).custom((to, { req }) => aMin(to) > aMin(req.body.from)).withMessage("Horario inválido"),
   body("step").isIn([15, 20, 30, 45, 60].map(String)).withMessage("Duración inválida"),
   body("whatsapp").optional().isLength({ max: 30 }).withMessage("WhatsApp demasiado largo"),
+  body("reminderText").optional().isLength({ max: 400 }).withMessage("El mensaje puede tener hasta 400 caracteres"),
+  body("reminderAuto").optional().isBoolean().withMessage("Valor inválido"),
   validar,
   appController.guardarAjustes
 );

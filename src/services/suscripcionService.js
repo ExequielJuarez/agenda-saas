@@ -41,7 +41,7 @@ async function suscripcionDe(negocio) {
 
 const aJson = (n, sub) => ({
   id: n.id, slug: n.slug, businessName: n.nombre, email: n.email, price: n.precio, payLink: n.link_pago,
-  whatsapp: n.whatsapp, settings: n.ajustes, subscription: sub,
+  whatsapp: n.whatsapp, reminderAuto: n.recordatorios_auto, reminderText: n.mensaje_recordatorio, settings: n.ajustes, subscription: sub,
 });
 
 // Suma un mes al vencimiento y reactiva la cuenta.

@@ -12,6 +12,8 @@ module.exports = (sequelize, DataTypes) => {
       link_pago: { type: DataTypes.STRING(300), allowNull: false, defaultValue: "" },
       whatsapp: { type: DataTypes.STRING(30), allowNull: false, defaultValue: "" }, // WhatsApp del negocio, para recibir reservas
       suspendido: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+      recordatorios_auto: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false }, // envío automático por WhatsApp
+      mensaje_recordatorio: { type: DataTypes.STRING(400), allowNull: false, defaultValue: "" }, // vacío = mensaje por defecto
       vence: { type: DataTypes.DATEONLY, allowNull: false }, // hasta cuándo está pago
       // Días, horario, duración de turnos y servicios (JSON en texto, compatible con MySQL y MariaDB)
       ajustes: {

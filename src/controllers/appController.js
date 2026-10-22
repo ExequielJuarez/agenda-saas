@@ -5,6 +5,7 @@ const db = require("../model/database/models");
 const agendo = require("../config/agendo");
 const suscripcion = require("../services/suscripcionService");
 const agenda = require("../services/agendaService");
+const recordatorios = require("../services/recordatorioService");
 const { registrarFallo, limpiarFallos } = require("../middlewares/auth");
 
 const limpio = (s, max) => String(s ?? "").replace(/[\u0000-\u001f]/g, " ").trim().slice(0, max);
@@ -29,7 +30,24 @@ module.exports = {
   },
 
   me(req, res) {
-    res.json({ tenant: suscripcion.aJson(req.negocio, req.sub), usable: suscripcion.puedeUsar(req.sub), whatsapp: agendo.whatsappDueno, brand: agendo.marca });
+    res.json({
+      tenant: suscripcion.aJson(req.negocio, req.sub), usable: suscripcion.puedeUsar(req.sub), whatsapp: agendo.whatsappDueno, brand: agendo.marca,
+      autoReminders: recordatorios.automaticoDisponible(), defaultReminderText: recordatorios.MENSAJE_BASE,
+    });
+  },
+
+  // ----- recordatorios -----
+  async recordatorios(req, res) {
+    const turnos = await recordatorios.proximos(req.negocio);
+    res.json({ reminders: turnos.map((t) => recordatorios.aJson(t, req.negocio)) });
+  },
+
+  async marcarRecordatorio(req, res) {
+    const turno = await db.Turno.findOne({ where: { id: req.params.id, negocio_id: req.negocio.id } });
+    if (!turno) return res.status(404).json({ error: "No existe" });
+    if (req.body.sent === false) await turno.update({ recordatorio_en: null, recordatorio_error: null });
+    else await recordatorios.marcarEnviado(turno);
+    res.json({ ok: true });
   },
 
   async turnos(req, res) {
@@ -123,6 +141,9 @@ module.exports = {
       ajustes,
       whatsapp: limpio(b.whatsapp, 30),
       ...(b.businessName ? { nombre: limpio(b.businessName, 80) } : {}),
+      ...("reminderText" in b ? { mensaje_recordatorio: limpio(b.reminderText, 400) } : {}),
+      // El envío automático solo se puede activar si el servidor tiene la API de WhatsApp configurada
+      ...("reminderAuto" in b ? { recordatorios_auto: !!b.reminderAuto && recordatorios.automaticoDisponible() } : {}),
     });
     res.json({ tenant: suscripcion.aJson(req.negocio, req.sub) });
   },

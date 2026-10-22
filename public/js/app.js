@@ -6,7 +6,7 @@ const money = (n) => '$' + Math.round(n).toLocaleString('es-AR');
 const STATUS = { pending: 'Pendiente', confirmed: 'Confirmado', done: 'Atendido', cancelled: 'Cancelado' };
 const SUB = { active: 'Al día', trial: 'Prueba gratis', overdue: 'Vencida', blocked: 'Bloqueada', suspended: 'Suspendida' };
 const today = ymd(new Date());
-const st = { me: null, stats: null, appts: [], services: [], tab: 'today', sel: today, usable: true };
+const st = { me: null, stats: null, appts: [], services: [], reminders: [], tab: 'today', sel: today, usable: true };
 
 const logout = async () => { try { await api('/api/app/logout', { method: 'POST' }); } catch {} st.me = null; showLogin(); };
 const call = async (path, opts) => {
@@ -19,10 +19,11 @@ async function load() {
   st.me = me;
   st.usable = me.usable;
   if (me.usable) {
-    const [a, s, sv] = await Promise.all([call('/api/app/appointments?from=' + today), call('/api/app/stats'), call('/api/app/services')]);
+    const [a, s, sv, rm] = await Promise.all([call('/api/app/appointments?from=' + today), call('/api/app/stats'), call('/api/app/services'), call('/api/app/reminders')]);
     st.appts = a.appointments;
     st.stats = s;
     st.services = sv.services;
+    st.reminders = rm.reminders;
   }
   render();
 }
@@ -111,6 +112,7 @@ function todayView() {
       h('div', { class: 'kpi' }, h('span', {}, 'Próximos 7 días'), h('strong', {}, String(s.week))),
       h('div', { class: 'kpi' }, h('span', {}, 'Ingresos del mes'), h('strong', {}, money(s.monthIncome)), h('small', {}, s.monthExpected ? `+ ${money(s.monthExpected)} por atender` : 'turnos marcados como atendidos'))),
     pend.length ? h('section', { class: 'card' }, h('h2', {}, `Reservas por confirmar (${pend.length})`), h('div', { class: 'list' }, ...pend.slice(0, 8).map((a) => apptItem(a, true)))) : null,
+    reminderList(),
     h('section', { class: 'card' }, h('div', { class: 'item', style: 'border:0;padding:0 0 10px' }, h('h2', { style: 'margin:0' }, 'Hoy · ' + longDate(today)), h('button', { class: 'btn primary sm', onclick: () => newAppointment(today) }, '+ Turno')),
       list.length ? h('div', { class: 'list' }, ...list.map((a) => apptItem(a, false))) : h('p', { class: 'empty' }, 'No hay turnos para hoy.')),
   ];
@@ -136,6 +138,51 @@ function clientsView() {
       h('div', { class: 'main' }, h('b', {}, c.name), h('span', { class: 'muted' }, `${c.visits} turno${c.visits === 1 ? '' : 's'}${c.spent ? ' · ' + money(c.spent) : ''} · último: ${c.last}`)),
       c.phone ? h('a', { class: 'btn sm', target: '_blank', rel: 'noopener', href: waLink(c.phone, `Hola ${c.name}!`) }, 'WhatsApp') : null)))
       : h('p', { class: 'empty' }, 'Tus clientes aparecen acá a medida que reservan.'))];
+}
+
+// ---------- recordatorios por WhatsApp ----------
+async function sendReminder(r) {
+  // Se abre WhatsApp en el mismo toque (si no, el navegador bloquea la ventana) y después se marca como enviado.
+  window.open(waLink(r.waNumber, r.text), '_blank', 'noopener');
+  try { await call(`/api/app/appointments/${r.id}/reminded`, { method: 'POST', body: {} }); } catch { return; }
+  st.reminders = (await call('/api/app/reminders')).reminders;
+  render();
+}
+
+function reminderList() {
+  const rs = st.reminders;
+  if (!rs.length) return null;
+  const pendientes = rs.filter((r) => !r.sentAt).length;
+  const dayLabel = (d) => (d === today ? 'Hoy' : 'Mañana');
+  return h('section', { class: 'card' },
+    h('h2', {}, pendientes ? `Recordatorios por enviar (${pendientes})` : 'Recordatorios enviados ✓'),
+    h('p', { class: 'muted', style: 'margin-top:0' }, 'Tocá el botón: se abre WhatsApp con el mensaje listo y solo tenés que enviarlo. Los clientes que reciben recordatorio faltan mucho menos.'),
+    h('div', { class: 'list' }, ...rs.map((r) => h('div', { class: 'item' },
+      h('span', { class: 'time' }, r.time),
+      h('div', { class: 'main' }, h('b', {}, r.name), h('span', { class: 'muted' }, `${dayLabel(r.date)} · ${r.service}`),
+        r.error ? h('span', { style: 'color:var(--danger);font-size:.8rem;display:block' }, `Falló el envío automático: ${r.error}`) : null),
+      r.sentAt ? h('span', { class: 'badge confirmed' }, 'Enviado') : null,
+      h('button', { class: 'btn sm ' + (r.sentAt ? '' : 'violet'), onclick: () => sendReminder(r) }, r.sentAt ? 'Reenviar' : 'Recordar por WhatsApp')))));
+}
+
+function remindersSettingsCard() {
+  const t = st.me.tenant, s = t.settings, auto = st.me.autoReminders;
+  const text = h('textarea', { name: 'reminderText', rows: 4, maxlength: 400, placeholder: st.me.defaultReminderText }, t.reminderText || '');
+  const toggle = h('input', { type: 'checkbox', name: 'reminderAuto', checked: !!t.reminderAuto && auto, disabled: !auto });
+  return h('section', { class: 'card' }, h('h2', {}, 'Recordatorios por WhatsApp'),
+    h('form', { class: 'form', onsubmit: async (e) => {
+      e.preventDefault();
+      try {
+        await call('/api/app/settings', { method: 'PUT', body: { businessName: t.businessName, days: s.days, from: s.from, to: s.to, step: s.step, whatsapp: t.whatsapp, reminderText: text.value, reminderAuto: toggle.checked } });
+        toast('Recordatorios guardados'); await load();
+      } catch {}
+    } },
+      h('label', {}, 'Mensaje (dejalo vacío para usar el mensaje por defecto)', text),
+      h('p', { class: 'muted', style: 'margin:0;font-size:.82rem' }, 'Podés usar: {nombre} {negocio} {servicio} {fecha} {hora}'),
+      h('label', { style: 'display:flex;gap:10px;align-items:center;color:var(--fg)' }, toggle, 'Enviar recordatorios automáticamente (sin tocar nada)'),
+      auto ? h('p', { class: 'muted', style: 'margin:0;font-size:.82rem' }, 'Se envían solos entre las 8 y las 21 hs, hasta 24 hs antes del turno, usando la plantilla de WhatsApp del servicio.')
+        : h('p', { class: 'muted', style: 'margin:0;font-size:.82rem' }, 'El envío automático todavía no está habilitado en este servicio. Mientras tanto, usá los recordatorios con un toque desde la pestaña Hoy.'),
+      h('button', { class: 'btn primary', type: 'submit' }, 'Guardar')));
 }
 
 // ---------- servicios y categorías ----------
@@ -197,6 +244,7 @@ function settingsView() {
     h('section', { class: 'card' }, h('h2', {}, 'Tu link de reservas'), h('p', { class: 'muted', style: 'margin-top:0' }, 'Compartilo por WhatsApp o Instagram. Los clientes reservan solos y los turnos aparecen acá.'),
       h('div', { class: 'item' }, h('code', { style: 'word-break:break-all' }, link), h('div', { class: 'actions' }, h('button', { class: 'btn sm', onclick: async () => { try { await navigator.clipboard.writeText(link); toast('Link copiado'); } catch { prompt('Copiá el link:', link); } } }, 'Copiar'), h('a', { class: 'btn sm', href: link, target: '_blank' }, 'Abrir')))),
     servicesCard(),
+    remindersSettingsCard(),
     h('section', { class: 'card' }, h('h2', {}, 'Horarios y contacto'), form),
     h('section', { class: 'card' }, h('h2', {}, 'Mi suscripción'),
       h('div', { class: 'item' }, h('div', { class: 'main' }, h('b', {}, `${money(t.price)} / mes`), h('span', { class: 'muted' }, `Vence el ${sub.paidUntil}`)), h('span', { class: 'badge ' + sub.state }, SUB[sub.state])),
