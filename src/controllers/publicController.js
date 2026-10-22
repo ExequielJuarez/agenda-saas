@@ -1,10 +1,11 @@
 // Reservas públicas de cada negocio (/b/<slug>).
 const agenda = require("../services/agendaService");
+const rubros = require("../config/rubros");
 
 module.exports = {
   async info(req, res) {
     const servicios = await agenda.serviciosActivos(req.negocio);
-    res.json({ name: req.negocio.nombre, whatsapp: req.negocio.whatsapp, services: servicios.map(agenda.servicioJson) });
+    res.json({ name: req.negocio.nombre, whatsapp: req.negocio.whatsapp, terms: rubros.obtener(req.negocio.rubro).terminos, services: servicios.map(agenda.servicioJson) });
   },
 
   async horarios(req, res) {

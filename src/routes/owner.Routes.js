@@ -2,6 +2,7 @@
 const express = require("express");
 const { body, param } = require("express-validator");
 const ownerController = require("../controllers/ownerController");
+const rubros = require("../config/rubros");
 const validar = require("../middlewares/validar");
 const { limitarIntentos, soloDueno } = require("../middlewares/auth");
 
@@ -18,6 +19,7 @@ router.post(
   body("email").trim().isEmail().withMessage("Ingresá un email válido"),
   body("password").isLength({ min: 6 }).withMessage("La contraseña debe tener al menos 6 caracteres"),
   body("price").optional({ values: "falsy" }).isInt({ min: 1 }).withMessage("Precio inválido"),
+  body("rubro").optional().isIn(rubros.ids).withMessage("Rubro inválido"),
   validar,
   ownerController.crearCliente
 );

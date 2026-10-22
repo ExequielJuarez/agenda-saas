@@ -2,8 +2,10 @@ const express = require("express");
 const { body, query } = require("express-validator");
 const agendo = require("../config/agendo");
 const validar = require("../middlewares/validar");
-const { negocioPublico } = require("../middlewares/auth");
+const { negocioPublico, limitarRegistros } = require("../middlewares/auth");
 const publicController = require("../controllers/publicController");
+const registroController = require("../controllers/registroController");
+const rubros = require("../config/rubros");
 
 const router = express.Router();
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
@@ -13,6 +15,20 @@ router.get("/", (req, res) => res.render("index", { agendo }));
 router.get("/owner", (req, res) => res.render("owner"));
 router.get("/app", (req, res) => res.render("app"));
 router.get("/b/:slug", (req, res) => res.render("book"));
+router.get("/registro", (req, res) => res.render("registro", { agendo }));
+
+// Registro público con prueba gratis
+router.get("/api/rubros", (req, res) => res.json({ rubros: rubros.lista() }));
+router.post(
+  "/api/signup",
+  limitarRegistros,
+  body("businessName").trim().notEmpty().withMessage("Poné el nombre de tu negocio").isLength({ max: 80 }).withMessage("Nombre demasiado largo"),
+  body("email").trim().isEmail().withMessage("Ingresá un email válido"),
+  body("password").isLength({ min: 6 }).withMessage("La contraseña debe tener al menos 6 caracteres"),
+  body("rubro").isIn(rubros.ids).withMessage("Elegí el tipo de negocio"),
+  validar,
+  registroController.registrar
+);
 
 // Datos públicos de la marca (precio, prueba gratis y WhatsApp para la landing)
 router.get("/api/config", (req, res) =>

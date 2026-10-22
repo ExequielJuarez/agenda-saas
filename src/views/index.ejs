@@ -60,16 +60,16 @@
 <body class="theme-dark">
   <header class="nav"><div class="wrap">
     <a class="brand" href="/"><i></i>Agendo</a>
-    <div class="nav-links"><a class="btn sm" href="/app">Ingresar</a><a class="btn primary sm" href="#precio">Empezar</a></div>
+    <div class="nav-links"><a class="btn sm" href="/app">Ingresar</a><a class="btn primary sm" href="/registro">Probar gratis</a></div>
   </div></header>
 
   <main>
     <section class="hero"><div class="wrap">
       <div>
-        <span class="pill"><b>●</b> Prueba gratis <span data-trial>14</span> días</span>
+        <span class="pill"><b>●</b> Prueba gratis <span data-trial>7</span> días</span>
         <h1>Tu agenda <em>llena</em>, sin atender el teléfono.</h1>
         <p class="lead">Tus clientes reservan solos desde un link, vos ves todo en un panel simple y los turnos se confirman por WhatsApp. Una suscripción mensual, sin comisiones.</p>
-        <div class="row"><a class="btn primary lg" href="#precio">Ver el plan</a><a class="btn lg" data-wa href="#">Hablar por WhatsApp</a></div>
+        <div class="row"><a class="btn primary lg" href="/registro">Probar gratis</a><a class="btn lg" href="#precio">Ver el plan</a></div>
       </div>
       <div class="mock" aria-hidden="true">
         <div class="head"><b>Hoy · Barbería Don Pedro</b><span class="badge confirmed">4 turnos</span></div>
@@ -90,18 +90,25 @@
       </div>
     </div></section>
 
+    <section><div class="wrap">
+      <h2 class="sec-h reveal">Se adapta a <em style="font-style:normal;color:var(--lime)">tu rubro</em></h2>
+      <p class="muted reveal" style="max-width:56ch;margin:0 0 20px">Elegís el tipo de negocio al registrarte y arrancás con servicios y horarios sugeridos. Después cargás tus propias categorías, precios y descripciones.</p>
+      <div id="rubros" class="chips reveal"></div>
+    </div></section>
+
     <section id="precio"><div class="wrap price-wrap">
       <div class="price reveal">
         <h3>Plan Agendo</h3>
         <p class="amount"><span data-price>$25.000</span> <small>/ mes</small></p>
-        <ul><li>Turnos y clientes ilimitados</li><li>Link de reservas para tu negocio</li><li>Panel de gestión en el celular</li><li>Soporte por WhatsApp</li><li><span data-trial>14</span> días de prueba gratis</li></ul>
-        <a class="btn lg" data-wa href="#">Quiero probarlo</a>
+        <ul><li>Turnos y clientes ilimitados</li><li>Link de reservas para tu negocio</li><li>Panel de gestión en el celular</li><li>Soporte por WhatsApp</li><li><span data-trial>7</span> días de prueba gratis</li></ul>
+        <a class="btn lg" href="/registro">Empezar la prueba gratis</a>
       </div>
     </div></section>
 
     <section><div class="wrap" style="max-width:760px">
       <h2 class="sec-h reveal">Preguntas frecuentes</h2>
       <details><summary>¿Tengo que instalar algo?</summary><p>No. Funciona desde el navegador del celular o la computadora.</p></details>
+      <details><summary>¿Qué pasa cuando termina la prueba?</summary><p>No perdés nada. Tus turnos, clientes y servicios quedan guardados y los podés ver. Para volver a cargar turnos y recibir reservas, activás la suscripción y seguís exactamente donde lo dejaste.</p></details>
       <details><summary>¿Cómo pago?</summary><p>Por transferencia o link de Mercado Pago, una vez por mes. Si te atrasás tenés unos días de gracia antes de que se pause la cuenta.</p></details>
       <details><summary>¿Puedo cancelar cuando quiera?</summary><p>Sí. No hay permanencia mínima. Tus datos quedan guardados por si volvés.</p></details>
       <details><summary>¿Mis clientes necesitan una cuenta?</summary><p>No. Reservan con su nombre y WhatsApp.</p></details>
@@ -115,6 +122,9 @@
     const cfg = await (await fetch('/api/config')).json();
     document.querySelectorAll('[data-price]').forEach((e) => (e.textContent = '$' + cfg.price.toLocaleString('es-AR')));
     document.querySelectorAll('[data-trial]').forEach((e) => (e.textContent = cfg.trialDays));
+    const { rubros } = await (await fetch('/api/rubros')).json();
+    const box = document.getElementById('rubros');
+    rubros.forEach((r) => { const s = document.createElement('span'); s.className = 'pill'; s.textContent = r.name; box.append(s); });
     document.querySelectorAll('[data-wa]').forEach((e) => { e.href = waLink(cfg.whatsapp, 'Hola! Quiero probar Agendo para mi negocio'); e.target = '_blank'; e.rel = 'noopener'; });
     const io = new IntersectionObserver((es) => es.forEach((en) => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } }), { rootMargin: '0px 0px -8% 0px' });
     document.querySelectorAll('.reveal').forEach((e) => io.observe(e));

@@ -2,15 +2,11 @@
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const db = require("../model/database/models");
-const agendo = require("../config/agendo");
 const suscripcion = require("../services/suscripcionService");
+const negocioService = require("../services/negocioService");
 const { registrarFallo, limpiarFallos } = require("../middlewares/auth");
 
 const sha = (s) => crypto.createHash("sha256").update(String(s)).digest();
-const slugify = (s) =>
-  s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "negocio";
-const ajustesIniciales = () => ({ days: [1, 2, 3, 4, 5, 6], from: "09:00", to: "18:00", step: 30 });
-
 const conSuscripcion = async (negocio) => suscripcion.aJson(negocio, await suscripcion.suscripcionDe(negocio));
 
 module.exports = {
@@ -37,18 +33,14 @@ module.exports = {
   },
 
   async crearCliente(req, res) {
-    const { businessName, email, password, payLink } = req.body;
-    if (await db.Negocio.findOne({ where: { email: email.toLowerCase() } })) return res.status(409).json({ error: "Ya existe un cliente con ese email" });
-    let slug = slugify(businessName);
-    while (await db.Negocio.findOne({ where: { slug } })) slug += "-" + crypto.randomInt(10, 99);
-    const negocio = await db.Negocio.create({
-      slug, nombre: businessName, email: email.toLowerCase(), password_hash: bcrypt.hashSync(password, 10),
-      precio: Number(req.body.price) > 0 ? Math.round(Number(req.body.price)) : agendo.precio,
-      link_pago: payLink || "", vence: suscripcion.sumarDias(suscripcion.hoy(), agendo.diasPrueba), ajustes: ajustesIniciales(),
-    });
-    // Servicio de arranque: el cliente lo edita o agrega los suyos desde su panel
-    await db.Servicio.create({ negocio_id: negocio.id, categoria: "General", nombre: "Turno general", precio: 0, minutos: 30 });
-    res.status(201).json({ tenant: await conSuscripcion(negocio) });
+    const { businessName, email, password, payLink, rubro, price } = req.body;
+    try {
+      const negocio = await negocioService.crear({ nombre: businessName, email, password, rubro, precio: price, linkPago: payLink });
+      res.status(201).json({ tenant: await conSuscripcion(negocio) });
+    } catch (err) {
+      if (err.status) return res.status(err.status).json({ error: err.message });
+      throw err;
+    }
   },
 
   async registrarPago(req, res) {
@@ -75,7 +67,7 @@ module.exports = {
   async eliminar(req, res) {
     const negocio = await db.Negocio.findByPk(req.params.id);
     if (!negocio) return res.status(404).json({ error: "No existe" });
-    await negocio.destroy(); // borra también sus pagos y turnos (ON DELETE CASCADE)
+    await negocio.destroy(); // borra también sus pagos, servicios y turnos (ON DELETE CASCADE)
     res.json({ ok: true });
   },
 };

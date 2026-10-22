@@ -6,6 +6,8 @@ const agendo = require("../config/agendo");
 const suscripcion = require("../services/suscripcionService");
 const agenda = require("../services/agendaService");
 const recordatorios = require("../services/recordatorioService");
+const negocioService = require("../services/negocioService");
+const rubros = require("../config/rubros");
 const { registrarFallo, limpiarFallos } = require("../middlewares/auth");
 
 const limpio = (s, max) => String(s ?? "").replace(/[\u0000-\u001f]/g, " ").trim().slice(0, max);
@@ -31,8 +33,9 @@ module.exports = {
 
   me(req, res) {
     res.json({
-      tenant: suscripcion.aJson(req.negocio, req.sub), usable: suscripcion.puedeUsar(req.sub), whatsapp: agendo.whatsappDueno, brand: agendo.marca,
+      tenant: suscripcion.aJson(req.negocio, req.sub), access: req.acceso, usable: req.acceso === "full", whatsapp: agendo.whatsappDueno, brand: agendo.marca,
       autoReminders: recordatorios.automaticoDisponible(), defaultReminderText: recordatorios.MENSAJE_BASE,
+      rubros: rubros.lista(), price: req.negocio.precio,
     });
   },
 
@@ -108,6 +111,12 @@ module.exports = {
     res.json({ services: (await agenda.serviciosActivos(req.negocio)).map(agenda.servicioJson) });
   },
 
+  // Suma los servicios sugeridos para el rubro del negocio que todavía no tiene
+  async agregarSugeridos(req, res) {
+    const agregados = await negocioService.agregarSugeridos(req.negocio);
+    res.json({ added: agregados, services: (await agenda.serviciosActivos(req.negocio)).map(agenda.servicioJson) });
+  },
+
   async crearServicio(req, res) {
     const b = req.body;
     const s = await db.Servicio.create({
@@ -141,6 +150,7 @@ module.exports = {
       ajustes,
       whatsapp: limpio(b.whatsapp, 30),
       ...(b.businessName ? { nombre: limpio(b.businessName, 80) } : {}),
+      ...("rubro" in b ? { rubro: rubros.obtener(b.rubro).id } : {}),
       ...("reminderText" in b ? { mensaje_recordatorio: limpio(b.reminderText, 400) } : {}),
       // El envío automático solo se puede activar si el servidor tiene la API de WhatsApp configurada
       ...("reminderAuto" in b ? { recordatorios_auto: !!b.reminderAuto && recordatorios.automaticoDisponible() } : {}),

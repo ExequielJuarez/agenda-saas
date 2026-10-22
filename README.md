@@ -22,13 +22,25 @@ Hecho sobre la base de proyectos `carpeta-base`: **Node.js + Express 5 + EJS + S
 - Ajustes de días de atención, horario, duración de los casilleros y WhatsApp del negocio.
 - Su link público de reservas `/b/<negocio>` y el estado de su suscripción con botón de pago.
 
-**Landing (`/`)** para vender el servicio.
+**Landing (`/`)** para vender el servicio y **registro propio (`/registro`)**: cada negocio crea su cuenta solo, elige su rubro y arranca la prueba gratis sin que vos hagas nada.
+
+## Rubros
+
+Al registrarse (o cuando lo creás desde tu panel) el negocio elige su tipo de negocio entre 18 opciones: barbería, peluquería, uñas y estética, kinesiología, psicología, nutrición, odontología, consultorio médico, veterinaria, taller mecánico, lavadero, academia de música, idiomas y apoyo escolar, gimnasio, pilates y yoga, tatuajes, fotografía y "otro". Eso carga:
+
+- **Servicios y categorías sugeridos** (con precio en "Consultar" para que ponga el suyo).
+- **Horario típico** del rubro.
+- **Las palabras de su rubro** en el panel y en su página de reservas: *pacientes y sesiones*, *alumnos y clases*, *socios*, *trabajos*…
+
+Después el negocio edita todo: agrega sus propias categorías, cambia precios y descripciones, o cambia de rubro desde Ajustes. Los rubros se definen en `src/config/rubros.js`: ahí agregás nuevos.
 
 ## Cómo funciona el cobro
 
-1. Creás al cliente desde tu panel: arranca con **14 días de prueba**.
+1. El negocio se registra (o lo creás vos): arranca con **7 días de prueba** con todo habilitado.
 2. Cuando te paga (transferencia, efectivo o Mercado Pago), tocás **Cobrar** y se suma un mes.
-3. Si vence, tiene **5 días de gracia** con aviso; después la cuenta se pausa (los datos se conservan) hasta que pague.
+3. Si vence, tiene **5 días de gracia** con aviso y todo habilitado.
+4. Pasada la gracia (o terminada la prueba sin pagar) entra en **modo solo lectura**: ve todos sus turnos, clientes y servicios, pero no puede cargar nada ni recibir reservas. Al pagar, sigue exactamente donde estaba, con todos sus datos.
+5. Si vos lo suspendés manualmente, no puede hacer nada hasta que lo reactives.
 
 Los cobros se registran a mano; no hay cobro automático con tarjeta. Se puede sumar la API de Mercado Pago después.
 

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="theme-color" content="#0f0d22">
+  <meta name="description" content="Probá <%= agendo.marca %> gratis por <%= agendo.diasPrueba %> días. Agenda de turnos y gestión para tu negocio.">
+  <title>Probar gratis · <%= agendo.marca %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="theme-dark">
+  <main class="login">
+    <form id="form" class="card login-card form" novalidate>
+      <a class="brand" href="/" style="margin-bottom:6px"><i></i><%= agendo.marca %></a>
+      <h1>Probá gratis <%= agendo.diasPrueba %> días</h1>
+      <p class="muted" style="margin:0">Sin tarjeta. Si no seguís, tus datos quedan guardados para cuando quieras volver.</p>
+      <label for="rubro">¿Qué tipo de negocio tenés?
+        <select id="rubro" name="rubro" required><option value="">Elegí una opción…</option></select>
+      </label>
+      <label for="businessName">Nombre del negocio <input id="businessName" name="businessName" required maxlength="80" autocomplete="organization" placeholder="Ej: Kinesiología Pérez"></label>
+      <label for="email">Email <input id="email" name="email" type="email" required autocomplete="username" placeholder="tu@email.com"></label>
+      <label for="password">Contraseña <input id="password" name="password" type="password" required minlength="6" autocomplete="new-password" placeholder="Mínimo 6 caracteres"></label>
+      <p id="err" class="err" role="alert"></p>
+      <button class="btn primary" type="submit">Crear mi cuenta</button>
+      <p class="muted" style="margin:0;font-size:.85rem">¿Ya tenés cuenta? <a href="/app" style="text-decoration:underline">Ingresá</a></p>
+    </form>
+  </main>
+  <script type="module" src="/js/registro.js"></script>
+</body>
+</html>

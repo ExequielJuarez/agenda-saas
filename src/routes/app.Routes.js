@@ -3,7 +3,8 @@ const express = require("express");
 const { body, query, param } = require("express-validator");
 const appController = require("../controllers/appController");
 const validar = require("../middlewares/validar");
-const { limitarIntentos, soloCliente, suscripcionActiva } = require("../middlewares/auth");
+const { limitarIntentos, soloCliente, accesoSegunSuscripcion } = require("../middlewares/auth");
+const rubros = require("../config/rubros");
 
 const router = express.Router();
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
@@ -22,8 +23,8 @@ router.post("/logout", appController.logout);
 router.use(soloCliente);
 router.get("/me", appController.me);
 
-// Desde acá, solo con suscripción vigente
-router.use(suscripcionActiva);
+// Desde acá: suscripción vigente = todo; vencida = solo lectura; suspendida = nada
+router.use(accesoSegunSuscripcion);
 router.get("/appointments", appController.turnos);
 router.get("/stats", appController.estadisticas);
 router.get("/slots", query("date").matches(FECHA).withMessage("Fecha inválida"), query("service").optional({ values: "falsy" }).isInt().withMessage("Servicio inválido"), validar, appController.horarios);
@@ -52,6 +53,7 @@ router.put(
   body("whatsapp").optional().isLength({ max: 30 }).withMessage("WhatsApp demasiado largo"),
   body("reminderText").optional().isLength({ max: 400 }).withMessage("El mensaje puede tener hasta 400 caracteres"),
   body("reminderAuto").optional().isBoolean().withMessage("Valor inválido"),
+  body("rubro").optional().isIn(rubros.ids).withMessage("Rubro inválido"),
   validar,
   appController.guardarAjustes
 );
@@ -66,6 +68,7 @@ const servicio = [
   validar,
 ];
 router.get("/services", appController.servicios);
+router.post("/services/suggested", appController.agregarSugeridos);
 router.post("/services", servicio, appController.crearServicio);
 router.put("/services/:id", param("id").isInt().withMessage("Servicio inválido"), servicio, appController.editarServicio);
 router.delete("/services/:id", param("id").isInt().withMessage("Servicio inválido"), validar, appController.borrarServicio);

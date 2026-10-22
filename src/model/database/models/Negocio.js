@@ -11,6 +11,7 @@ module.exports = (sequelize, DataTypes) => {
       precio: { type: DataTypes.INTEGER, allowNull: false },
       link_pago: { type: DataTypes.STRING(300), allowNull: false, defaultValue: "" },
       whatsapp: { type: DataTypes.STRING(30), allowNull: false, defaultValue: "" }, // WhatsApp del negocio, para recibir reservas
+      rubro: { type: DataTypes.STRING(30), allowNull: false, defaultValue: "general" }, // tipo de negocio (ver config/rubros.js)
       suspendido: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
       recordatorios_auto: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false }, // envío automático por WhatsApp
       mensaje_recordatorio: { type: DataTypes.STRING(400), allowNull: false, defaultValue: "" }, // vacío = mensaje por defecto

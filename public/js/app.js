@@ -4,21 +4,25 @@ import { h, api, toast, ymd, parse, longDate, DOW, MONTHS, waLink } from './comm
 const app = document.getElementById('app');
 const money = (n) => '$' + Math.round(n).toLocaleString('es-AR');
 const STATUS = { pending: 'Pendiente', confirmed: 'Confirmado', done: 'Atendido', cancelled: 'Cancelado' };
-const SUB = { active: 'Al día', trial: 'Prueba gratis', overdue: 'Vencida', blocked: 'Bloqueada', suspended: 'Suspendida' };
+const SUB = { active: 'Al día', trial: 'Prueba gratis', overdue: 'Vencida', blocked: 'Vencida (solo lectura)', suspended: 'Suspendida' };
 const today = ymd(new Date());
-const st = { me: null, stats: null, appts: [], services: [], reminders: [], tab: 'today', sel: today, usable: true };
+const st = { me: null, stats: null, appts: [], services: [], reminders: [], tab: 'today', sel: today, access: 'full' };
+
+// Palabras según el rubro del negocio (paciente, alumno, socio…)
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+const T = () => st.me?.tenant.terms || { cliente: 'cliente', clientes: 'clientes', turno: 'turno', turnos: 'turnos', servicio: 'servicio', servicios: 'servicios' };
 
 const logout = async () => { try { await api('/api/app/logout', { method: 'POST' }); } catch {} st.me = null; showLogin(); };
 const call = async (path, opts) => {
   try { return await api(path, opts); }
-  catch (e) { if (e.status === 401) showLogin(); else if (e.status === 402) { st.usable = false; render(); } else toast(e.message); throw e; }
+  catch (e) { if (e.status === 401) showLogin(); else if (e.status === 402) { toast(e.message); load().catch(() => {}); } else toast(e.message); throw e; }
 };
 
 async function load() {
   const me = await call('/api/app/me');
   st.me = me;
-  st.usable = me.usable;
-  if (me.usable) {
+  st.access = me.access;
+  if (me.access !== 'none') {
     const [a, s, sv, rm] = await Promise.all([call('/api/app/appointments?from=' + today), call('/api/app/stats'), call('/api/app/services'), call('/api/app/reminders')]);
     st.appts = a.appointments;
     st.stats = s;
@@ -43,7 +47,7 @@ function showLogin(msg) {
     h('h1', {}, 'Ingresá a tu agenda'),
     h('label', { for: 'em' }, 'Email', email), h('label', { for: 'pw' }, 'Contraseña', pw), err,
     h('button', { class: 'btn primary', type: 'submit' }, 'Ingresar'),
-    h('p', { class: 'muted', style: 'margin:0;font-size:.85rem' }, '¿No tenés cuenta? Pedila a quien te brinda el servicio.'))));
+    h('p', { class: 'muted', style: 'margin:0;font-size:.85rem' }, '¿No tenés cuenta? ', h('a', { href: '/registro', style: 'text-decoration:underline' }, 'Probá gratis'), '.'))));
   email.focus();
 }
 
@@ -71,12 +75,12 @@ function newAppointment(date = st.sel) {
   };
   dateIn.addEventListener('change', loadTimes);
   svcSel.addEventListener('change', loadTimes);
-  dialog('Nuevo turno', [
-    h('label', {}, 'Cliente', h('input', { name: 'name', required: true, maxlength: 80, autocomplete: 'off' })),
+  dialog('Nuevo ' + T().turno, [
+    h('label', {}, cap(T().cliente), h('input', { name: 'name', required: true, maxlength: 80, autocomplete: 'off' })),
     h('label', {}, 'WhatsApp', h('input', { name: 'phone', type: 'tel', inputmode: 'tel', maxlength: 30 })),
-    h('label', {}, 'Servicio', svcSel),
+    h('label', {}, cap(T().servicio), svcSel),
     h('div', { class: 'row2' }, h('label', {}, 'Fecha', dateIn), h('label', {}, 'Hora', timeSel)),
-  ], async (d) => { await call('/api/app/appointments', { method: 'POST', body: d }); toast('Turno agendado'); await load(); }, 'Agendar');
+  ], async (d) => { await call('/api/app/appointments', { method: 'POST', body: d }); toast(cap(T().turno) + ' agendado'); await load(); }, 'Agendar');
   loadTimes();
 }
 
@@ -107,14 +111,14 @@ function todayView() {
   const pend = st.appts.filter((a) => a.status === 'pending');
   return [
     h('div', { class: 'grid kpis' },
-      h('div', { class: 'kpi' }, h('span', {}, 'Turnos hoy'), h('strong', {}, String(s.today))),
+      h('div', { class: 'kpi' }, h('span', {}, cap(T().turnos) + ' hoy'), h('strong', {}, String(s.today))),
       h('div', { class: 'kpi' }, h('span', {}, 'Por confirmar'), h('strong', {}, String(s.pending))),
       h('div', { class: 'kpi' }, h('span', {}, 'Próximos 7 días'), h('strong', {}, String(s.week))),
       h('div', { class: 'kpi' }, h('span', {}, 'Ingresos del mes'), h('strong', {}, money(s.monthIncome)), h('small', {}, s.monthExpected ? `+ ${money(s.monthExpected)} por atender` : 'turnos marcados como atendidos'))),
     pend.length ? h('section', { class: 'card' }, h('h2', {}, `Reservas por confirmar (${pend.length})`), h('div', { class: 'list' }, ...pend.slice(0, 8).map((a) => apptItem(a, true)))) : null,
     reminderList(),
-    h('section', { class: 'card' }, h('div', { class: 'item', style: 'border:0;padding:0 0 10px' }, h('h2', { style: 'margin:0' }, 'Hoy · ' + longDate(today)), h('button', { class: 'btn primary sm', onclick: () => newAppointment(today) }, '+ Turno')),
-      list.length ? h('div', { class: 'list' }, ...list.map((a) => apptItem(a, false))) : h('p', { class: 'empty' }, 'No hay turnos para hoy.')),
+    h('section', { class: 'card' }, h('div', { class: 'item', style: 'border:0;padding:0 0 10px' }, h('h2', { style: 'margin:0' }, 'Hoy · ' + longDate(today)), h('button', { class: 'btn primary sm', onclick: () => newAppointment(today) }, '+ ' + cap(T().turno))),
+      list.length ? h('div', { class: 'list' }, ...list.map((a) => apptItem(a, false))) : h('p', { class: 'empty' }, `No hay ${T().turnos} para hoy.`)),
   ];
 }
 
@@ -124,20 +128,20 @@ function agendaView() {
   return [
     h('div', { class: 'chips', style: 'flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;overscroll-behavior-x:contain' }, ...days.map((d) => {
       const n = onDay(d).filter((a) => a.status !== 'cancelled').length, dt = parse(d);
-      return h('button', { class: 'chip day' + (d === st.sel ? ' on' : ''), onclick: () => { st.sel = d; render(); } }, h('small', {}, DOW[dt.getDay()]), h('b', {}, String(dt.getDate())), h('small', {}, n ? `${n} turno${n > 1 ? 's' : ''}` : '·'));
+      return h('button', { class: 'chip day' + (d === st.sel ? ' on' : ''), onclick: () => { st.sel = d; render(); } }, h('small', {}, DOW[dt.getDay()]), h('b', {}, String(dt.getDate())), h('small', {}, n ? `${n} ${n > 1 ? T().turnos : T().turno}` : '·'));
     })),
-    h('section', { class: 'card' }, h('div', { class: 'item', style: 'border:0;padding:0 0 10px' }, h('h2', { style: 'margin:0;text-transform:capitalize' }, longDate(st.sel)), h('button', { class: 'btn primary sm', onclick: () => newAppointment(st.sel) }, '+ Turno')),
-      list.length ? h('div', { class: 'list' }, ...list.map((a) => apptItem(a, false))) : h('p', { class: 'empty' }, 'Día libre. Podés agendar un turno manual.')),
+    h('section', { class: 'card' }, h('div', { class: 'item', style: 'border:0;padding:0 0 10px' }, h('h2', { style: 'margin:0;text-transform:capitalize' }, longDate(st.sel)), h('button', { class: 'btn primary sm', onclick: () => newAppointment(st.sel) }, '+ ' + cap(T().turno))),
+      list.length ? h('div', { class: 'list' }, ...list.map((a) => apptItem(a, false))) : h('p', { class: 'empty' }, `Día libre. Podés agendar un ${T().turno} manual.`)),
   ];
 }
 
 function clientsView() {
   const cs = st.stats.clients;
-  return [h('section', { class: 'card' }, h('h2', {}, `Clientes (${cs.length})`),
+  return [h('section', { class: 'card' }, h('h2', {}, `${cap(T().clientes)} (${cs.length})`),
     cs.length ? h('div', { class: 'list' }, ...cs.map((c) => h('div', { class: 'item' },
-      h('div', { class: 'main' }, h('b', {}, c.name), h('span', { class: 'muted' }, `${c.visits} turno${c.visits === 1 ? '' : 's'}${c.spent ? ' · ' + money(c.spent) : ''} · último: ${c.last}`)),
+      h('div', { class: 'main' }, h('b', {}, c.name), h('span', { class: 'muted' }, `${c.visits} ${c.visits === 1 ? T().turno : T().turnos}${c.spent ? ' · ' + money(c.spent) : ''} · último: ${c.last}`)),
       c.phone ? h('a', { class: 'btn sm', target: '_blank', rel: 'noopener', href: waLink(c.phone, `Hola ${c.name}!`) }, 'WhatsApp') : null)))
-      : h('p', { class: 'empty' }, 'Tus clientes aparecen acá a medida que reservan.'))];
+      : h('p', { class: 'empty' }, `Tus ${T().clientes} aparecen acá a medida que reservan.`))];
 }
 
 // ---------- recordatorios por WhatsApp ----------
@@ -189,9 +193,9 @@ function remindersSettingsCard() {
 function serviceDialog(s) {
   const cats = [...new Set(st.services.map((x) => x.category))];
   const id = 'cats-' + Math.random().toString(36).slice(2, 7);
-  dialog(s ? 'Editar servicio' : 'Nuevo servicio', [
+  dialog(s ? 'Editar ' + T().servicio : 'Nuevo ' + T().servicio, [
     h('label', {}, 'Categoría', h('input', { name: 'category', value: s?.category || cats[0] || 'General', list: id, maxlength: 60, placeholder: 'Ej: Cortes, Barba, Color…' }), h('datalist', { id }, ...cats.map((c) => h('option', { value: c })))),
-    h('label', {}, 'Nombre del servicio', h('input', { name: 'name', value: s?.name || '', required: true, maxlength: 80, placeholder: 'Ej: Corte de pelo profesional' })),
+    h('label', {}, 'Nombre del ' + T().servicio, h('input', { name: 'name', value: s?.name || '', required: true, maxlength: 80, placeholder: 'Ej: Corte de pelo profesional' })),
     h('div', { class: 'row2' },
       h('label', {}, 'Precio ($)', h('input', { name: 'price', type: 'number', inputmode: 'numeric', min: 0, value: s?.price ?? '', placeholder: 'Ej: 9000' })),
       h('label', {}, 'Duración (min)', h('input', { name: 'minutes', type: 'number', inputmode: 'numeric', min: 5, max: 600, step: 5, value: s?.minutes ?? 30, required: true }))),
@@ -207,8 +211,11 @@ function servicesCard() {
   const groups = new Map();
   st.services.forEach((s) => groups.set(s.category, [...(groups.get(s.category) || []), s]));
   return h('section', { class: 'card' },
-    h('div', { class: 'item', style: 'border:0;padding:0 0 6px' }, h('h2', { style: 'margin:0' }, 'Servicios y precios'), h('button', { class: 'btn primary sm', onclick: () => serviceDialog() }, '+ Servicio')),
-    h('p', { class: 'muted', style: 'margin-top:0' }, 'Lo que cargues acá se ve en tu link de reservas, con su precio y descripción. Los horarios libres se ajustan a la duración de cada servicio.'),
+    h('div', { class: 'item', style: 'border:0;padding:0 0 6px' }, h('h2', { style: 'margin:0' }, `${cap(T().servicios)} y precios`), h('button', { class: 'btn primary sm', onclick: () => serviceDialog() }, '+ ' + cap(T().servicio))),
+    h('p', { class: 'muted', style: 'margin-top:0' }, `Lo que cargues acá se ve en tu link de reservas, con su precio y descripción. Los horarios libres se ajustan a la duración de cada ${T().servicio}. Armá tus propias categorías (por ejemplo: Consultas, Controles, Packs).`),
+    h('div', { style: 'margin-bottom:10px' }, h('button', { class: 'btn sm', onclick: async () => {
+      try { const r = await call('/api/app/services/suggested', { method: 'POST', body: {} }); toast(r.added ? `Se agregaron ${r.added} sugeridos` : 'Ya tenés todos los sugeridos'); await load(); } catch {}
+    } }, `Agregar ${T().servicios} sugeridos para mi rubro`)),
     h('div', { class: 'list' }, ...[...groups].map(([cat, items]) => h('div', { class: 'grid', style: 'gap:8px' },
       h('p', { class: 'eyebrow', style: 'margin-top:8px' }, cat),
       ...items.map((s) => h('div', { class: 'item' },
@@ -230,11 +237,12 @@ function settingsView() {
     e.preventDefault();
     const fd = new FormData(e.target);
     try {
-      await call('/api/app/settings', { method: 'PUT', body: { businessName: fd.get('businessName'), days: fd.getAll('days'), from: fd.get('from'), to: fd.get('to'), step: fd.get('step'), whatsapp: fd.get('whatsapp') } });
+      await call('/api/app/settings', { method: 'PUT', body: { businessName: fd.get('businessName'), rubro: fd.get('rubro'), days: fd.getAll('days'), from: fd.get('from'), to: fd.get('to'), step: fd.get('step'), whatsapp: fd.get('whatsapp') } });
       toast('Ajustes guardados'); await load();
     } catch {}
   } },
     h('label', {}, 'Nombre del negocio', h('input', { name: 'businessName', value: t.businessName, maxlength: 80 })),
+    h('label', {}, 'Tipo de negocio (cambia las palabras del panel: paciente, alumno, socio…)', h('select', { name: 'rubro' }, ...st.me.rubros.map((r) => h('option', { value: r.id, selected: r.id === t.rubro }, r.name)))),
     h('label', {}, 'Días de atención', h('div', { class: 'checks' }, ...dayNames.map(([v, l]) => h('label', {}, h('input', { type: 'checkbox', name: 'days', value: v, checked: s.days.includes(Number(v)) }), l)))),
     h('div', { class: 'row2' }, h('label', {}, 'Desde', h('input', { type: 'time', name: 'from', value: s.from })), h('label', {}, 'Hasta', h('input', { type: 'time', name: 'to', value: s.to }))),
     h('label', {}, 'Duración de cada turno', h('select', { name: 'step' }, ...[15, 20, 30, 45, 60].map((m) => h('option', { value: m, selected: m === s.step }, `${m} minutos`)))),
@@ -242,7 +250,7 @@ function settingsView() {
     h('button', { class: 'btn primary', type: 'submit' }, 'Guardar ajustes'));
   return [
     h('section', { class: 'card' }, h('h2', {}, 'Tu link de reservas'), h('p', { class: 'muted', style: 'margin-top:0' }, 'Compartilo por WhatsApp o Instagram. Los clientes reservan solos y los turnos aparecen acá.'),
-      h('div', { class: 'item' }, h('code', { style: 'word-break:break-all' }, link), h('div', { class: 'actions' }, h('button', { class: 'btn sm', onclick: async () => { try { await navigator.clipboard.writeText(link); toast('Link copiado'); } catch { prompt('Copiá el link:', link); } } }, 'Copiar'), h('a', { class: 'btn sm', href: link, target: '_blank' }, 'Abrir')))),
+      h('div', { class: 'item' }, h('code', { style: 'word-break:break-all' }, link), h('div', { class: 'actions' }, h('button', { class: 'btn sm keep', onclick: async () => { try { await navigator.clipboard.writeText(link); toast('Link copiado'); } catch { prompt('Copiá el link:', link); } } }, 'Copiar'), h('a', { class: 'btn sm', href: link, target: '_blank' }, 'Abrir')))),
     servicesCard(),
     remindersSettingsCard(),
     h('section', { class: 'card' }, h('h2', {}, 'Horarios y contacto'), form),
@@ -261,7 +269,8 @@ function payActions() {
 
 function banner() {
   const sub = st.me.tenant.subscription;
-  if (sub.state === 'trial') return h('div', { class: 'banner' }, h('b', {}, `Prueba gratis: te quedan ${Math.max(0, sub.daysLeft)} días`), h('span', {}, 'Después se activa la suscripción mensual.'));
+  if (sub.state === 'blocked') return h('div', { class: 'banner bad' }, h('b', {}, 'Tu prueba terminó: estás en modo solo lectura'), h('span', {}, `Tus datos están guardados y los podés ver. Activá la suscripción (${money(st.me.price)}/mes) para volver a cargar ${T().turnos} y recibir reservas.`), payActions());
+  if (sub.state === 'trial') return h('div', { class: 'banner' }, h('b', {}, `Prueba gratis: te ${Math.max(0, sub.daysLeft) === 1 ? 'queda 1 día' : 'quedan ' + Math.max(0, sub.daysLeft) + ' días'}`), h('span', {}, 'Al terminar, tus datos se conservan; para seguir cargando activás la suscripción mensual.'));
   if (sub.state === 'overdue') return h('div', { class: 'banner bad' }, h('b', {}, 'Tu suscripción está vencida'), h('span', {}, 'Regularizá el pago para no perder el acceso.'), payActions());
   if (sub.state === 'active' && sub.daysLeft <= 5) return h('div', { class: 'banner' }, h('b', {}, `Tu suscripción vence en ${sub.daysLeft} días`));
   return null;
@@ -269,15 +278,15 @@ function banner() {
 
 function blocked() {
   return h('main', { class: 'wrap page', style: 'max-width:520px;padding-top:60px' }, h('section', { class: 'card' },
-    h('h1', { style: 'font-size:1.6rem;margin-bottom:10px' }, 'Tu cuenta está en pausa'),
-    h('p', { class: 'muted' }, 'La suscripción está vencida o suspendida. Tus turnos y clientes siguen guardados: al regularizar el pago se reactiva todo.'), payActions(),
+    h('h1', { style: 'font-size:1.6rem;margin-bottom:10px' }, 'Tu cuenta está suspendida'),
+    h('p', { class: 'muted' }, 'Tu cuenta fue suspendida. Tus datos siguen guardados: escribinos para reactivarla.'), payActions(),
     h('button', { class: 'btn sm', style: 'margin-top:14px', onclick: logout }, 'Salir')));
 }
 
 function render() {
   if (!st.me) return;
-  if (!st.usable) return app.replaceChildren(blocked());
-  const tabs = [['today', 'Hoy'], ['agenda', 'Agenda'], ['clients', 'Clientes'], ['settings', 'Ajustes']];
+  if (st.access === 'none') return app.replaceChildren(blocked());
+  const tabs = [['today', 'Hoy'], ['agenda', 'Agenda'], ['clients', cap(T().clientes)], ['settings', 'Ajustes']];
   const view = { today: todayView, agenda: agendaView, clients: clientsView, settings: settingsView }[st.tab]();
   const scroll = window.scrollY;
   app.replaceChildren(
@@ -285,6 +294,10 @@ function render() {
     h('main', { class: 'wrap' },
       h('nav', { class: 'tabs', role: 'tablist' }, ...tabs.map(([k, l]) => h('button', { class: 'tab' + (st.tab === k ? ' on' : ''), role: 'tab', 'aria-selected': String(st.tab === k), onclick: () => { st.tab = k; render(); } }, l))),
       h('div', { class: 'page' }, banner(), ...view)));
+  // Con la prueba vencida se puede ver todo pero no modificar: se desactivan los controles de carga
+  if (st.access === 'readonly') {
+    app.querySelectorAll('main button:not(.tab):not(.chip.day):not(.keep), main input, main select, main textarea').forEach((el) => { el.disabled = true; });
+  }
   window.scrollTo(0, scroll);
 }
 

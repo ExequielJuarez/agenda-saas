@@ -2,6 +2,7 @@
 const { Op, fn, col } = require("sequelize");
 const db = require("../model/database/models");
 const agendo = require("../config/agendo");
+const rubros = require("../config/rubros");
 
 const pad = (n) => String(n).padStart(2, "0");
 const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -32,6 +33,8 @@ function estado(negocio, tienePagos) {
   return { state, paidUntil: negocio.vence, daysLeft };
 }
 const puedeUsar = (sub) => ["trial", "active", "overdue"].includes(sub.state);
+// full: usa todo · readonly: la prueba o el pago venció, ve sus datos pero no carga nada · none: suspendido por el dueño
+const acceso = (sub) => (puedeUsar(sub) ? "full" : sub.state === "blocked" ? "readonly" : "none");
 
 const tienePagos = async (negocio) => (await db.Pago.count({ where: { negocio_id: negocio.id } })) > 0;
 
@@ -41,6 +44,7 @@ async function suscripcionDe(negocio) {
 
 const aJson = (n, sub) => ({
   id: n.id, slug: n.slug, businessName: n.nombre, email: n.email, price: n.precio, payLink: n.link_pago,
+  rubro: n.rubro, terms: rubros.obtener(n.rubro).terminos,
   whatsapp: n.whatsapp, reminderAuto: n.recordatorios_auto, reminderText: n.mensaje_recordatorio, settings: n.ajustes, subscription: sub,
 });
 
@@ -95,8 +99,8 @@ async function resumen() {
     months: meses,
     tenants: filas.sort((a, b) => a.subscription.paidUntil.localeCompare(b.subscription.paidUntil)),
     payments: pagos.slice(0, 30).map((p) => ({ id: p.id, amount: p.monto, method: p.medio, note: p.nota, date: p.fecha, businessName: nombres[p.negocio_id] || "(eliminado)" })),
-    defaults: { price: agendo.precio, currency: agendo.moneda, trialDays: agendo.diasPrueba },
+    defaults: { price: agendo.precio, currency: agendo.moneda, trialDays: agendo.diasPrueba, rubros: rubros.lista() },
   };
 }
 
-module.exports = { hoy, ymd, sumarDias, sumarMes, estado, puedeUsar, suscripcionDe, aJson, registrarPago, resumen };
+module.exports = { hoy, ymd, sumarDias, sumarMes, estado, puedeUsar, acceso, suscripcionDe, aJson, registrarPago, resumen };

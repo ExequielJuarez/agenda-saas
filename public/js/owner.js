@@ -3,7 +3,7 @@ import { h, api, toast, parse, MONTHS } from './common.js';
 
 const app = document.getElementById('app');
 const money = (n) => '$' + Math.round(n).toLocaleString('es-AR');
-const STATE = { active: 'Al día', trial: 'Prueba', overdue: 'Vencido', blocked: 'Bloqueado', suspended: 'Suspendido' };
+const STATE = { active: 'Al día', trial: 'Prueba', overdue: 'Vencido', blocked: 'Solo lectura', suspended: 'Suspendido' };
 const fmtDate = (s) => { const d = parse(s); return `${d.getDate()} ${MONTHS[d.getMonth()].slice(0, 3)} ${d.getFullYear()}`; };
 const st = { data: null, tab: 'clients' };
 
@@ -47,6 +47,7 @@ const field = (label, name, props = {}) => h('label', {}, label, h('input', { na
 
 const newClient = () => dialog('Nuevo cliente', [
   field('Nombre del negocio', 'businessName', { required: true, placeholder: 'Ej: Barbería Don Pedro' }),
+  h('label', {}, 'Tipo de negocio', h('select', { name: 'rubro' }, ...st.data.defaults.rubros.map((r) => h('option', { value: r.id }, r.name)))),
   field('Email (su usuario)', 'email', { type: 'email', required: true, autocomplete: 'off' }),
   field('Contraseña inicial', 'password', { type: 'text', required: true, minlength: 6, autocomplete: 'off', placeholder: 'Mínimo 6 caracteres' }),
   field('Precio mensual', 'price', { type: 'number', inputmode: 'numeric', value: st.data.defaults.price, min: 1 }),
@@ -96,7 +97,7 @@ function clientsTable() {
     rows.length ? h('div', { class: 'table-wrap' }, h('table', {},
       h('thead', {}, h('tr', {}, ...['Negocio', 'Estado', 'Vence', 'Precio', 'Último pago', ''].map((c) => h('th', {}, c)))),
       h('tbody', {}, ...rows.map((t) => h('tr', {},
-        h('td', {}, h('span', { class: 'name' }, t.businessName), h('span', { class: 'sub' }, `${t.email} · ${t.appointments} turnos`)),
+        h('td', {}, h('span', { class: 'name' }, t.businessName), h('span', { class: 'sub' }, `${t.email} · ${(st.data.defaults.rubros.find((r) => r.id === t.rubro) || {}).name || 'Otro'} · ${t.appointments} turnos`)),
         h('td', {}, h('span', { class: 'badge ' + t.subscription.state }, STATE[t.subscription.state])),
         h('td', { class: 'num' }, fmtDate(t.subscription.paidUntil), h('span', { class: 'sub', style: 'display:block' }, t.subscription.daysLeft >= 0 ? `en ${t.subscription.daysLeft} días` : `hace ${-t.subscription.daysLeft} días`)),
         h('td', { class: 'num' }, money(t.price)),
