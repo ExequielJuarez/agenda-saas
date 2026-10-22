@@ -1,0 +1,9 @@
+{
+  "name": "agenda-saas",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Agendo: micro-app de turnos por suscripción mensual, con panel del dueño y panel por cliente",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" }
+}

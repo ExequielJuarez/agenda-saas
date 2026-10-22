@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f0d22">
+  <meta name="description" content="Agendo: agenda de turnos online con recordatorios por WhatsApp para barberías, consultorios y salones. Una suscripción mensual, todo incluido.">
+  <title>Agendo · Agenda de turnos para tu negocio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    .nav .wrap { display: flex; justify-content: space-between; align-items: center; height: 68px; }
+    .nav { position: sticky; top: 0; z-index: 20; backdrop-filter: blur(12px); background: color-mix(in srgb, var(--bg) 85%, transparent); padding-top: env(safe-area-inset-top, 0px); }
+    .nav-links { display: flex; gap: 8px; align-items: center; }
+    .hero { padding: clamp(56px, 10vw, 120px) 0 clamp(48px, 8vw, 96px); position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; width: 720px; height: 720px; right: -240px; top: -260px; background: radial-gradient(circle, rgba(109, 94, 252, 0.45), transparent 65%); pointer-events: none; }
+    .hero .wrap { display: grid; gap: 48px; align-items: center; position: relative; }
+    @media (min-width: 920px) { .hero .wrap { grid-template-columns: 1.1fr 0.9fr; } }
+    .pill { display: inline-flex; gap: 8px; align-items: center; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line); font-size: 0.85rem; color: var(--muted); }
+    .pill b { color: var(--lime); }
+    .hero h1 { font-size: clamp(2.8rem, 7.6vw, 5.6rem); margin: 18px 0; line-height: 1; }
+    .hero h1 em { font-style: normal; color: var(--lime); }
+    .hero p.lead { color: var(--muted); font-size: 1.2rem; max-width: 46ch; margin: 0 0 28px; }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; }
+    .btn.lg { padding: 15px 26px; font-size: 1.02rem; border-radius: 14px; }
+    .mock { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 18px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45); transform: rotate(1.5deg); }
+    .mock .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .mock .head b { font: 700 1.1rem var(--font-display); }
+    .mock .it { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 14px; margin-bottom: 8px; animation: slidein 500ms var(--ease-out) both; }
+    .mock .it:nth-child(3) { animation-delay: 80ms; } .mock .it:nth-child(4) { animation-delay: 160ms; } .mock .it:nth-child(5) { animation-delay: 240ms; }
+    @keyframes slidein { from { opacity: 0; transform: translateY(10px); } }
+    .mock .it time { font: 700 1.05rem var(--font-display); min-width: 54px; }
+    .mock .it span { flex: 1; font-size: 0.92rem; }
+    .mock .it small { color: var(--muted); display: block; }
+    section { padding: clamp(48px, 8vw, 96px) 0; }
+    .sec-h { font-size: clamp(2rem, 5vw, 3.4rem); margin-bottom: 12px; }
+    .feat { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); margin-top: 32px; }
+    .feat .card { padding: 22px; }
+    .feat h3 { font-size: 1.2rem; margin-bottom: 6px; }
+    .feat p { color: var(--muted); margin: 0; }
+    .feat .ic { width: 42px; height: 42px; border-radius: 12px; background: var(--lime); color: #14122b; display: grid; place-items: center; font: 700 1.1rem var(--font-display); margin-bottom: 14px; }
+    .price-wrap { display: grid; place-items: center; }
+    .price { width: min(460px, 100%); border-radius: 28px; padding: 32px; background: var(--lime); color: #14122b; position: relative; }
+    .price h3 { font-size: 1.3rem; }
+    .price .amount { font: 700 clamp(3rem, 12vw, 4.6rem) var(--font-display); letter-spacing: -0.04em; margin: 10px 0 0; }
+    .price .amount small { font-size: 1.1rem; letter-spacing: 0; font-weight: 600; opacity: 0.7; }
+    .price ul { list-style: none; padding: 0; margin: 18px 0 24px; display: grid; gap: 10px; }
+    .price li::before { content: '✓'; font-weight: 700; margin-right: 10px; }
+    .price .btn { width: 100%; background: #14122b; color: #fff; border-color: #14122b; padding: 15px; }
+    details { border-top: 1px solid var(--line); padding: 16px 0; }
+    details summary { cursor: pointer; font-weight: 600; font-size: 1.05rem; }
+    details p { color: var(--muted); margin: 8px 0 0; }
+    footer { border-top: 1px solid var(--line); padding: 28px 0 calc(28px + env(safe-area-inset-bottom, 0px)); color: var(--muted); font-size: 0.9rem; }
+    footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+    @media (prefers-reduced-motion: reduce) { .mock .it { animation: none; } .mock { transform: none; } }
+  </style>
+</head>
+<body class="theme-dark">
+  <header class="nav"><div class="wrap">
+    <a class="brand" href="/"><i></i>Agendo</a>
+    <div class="nav-links"><a class="btn sm" href="/app">Ingresar</a><a class="btn primary sm" href="#precio">Empezar</a></div>
+  </div></header>
+
+  <main>
+    <section class="hero"><div class="wrap">
+      <div>
+        <span class="pill"><b>●</b> Prueba gratis <span data-trial>14</span> días</span>
+        <h1>Tu agenda <em>llena</em>, sin atender el teléfono.</h1>
+        <p class="lead">Tus clientes reservan solos desde un link, vos ves todo en un panel simple y los turnos se confirman por WhatsApp. Una suscripción mensual, sin comisiones.</p>
+        <div class="row"><a class="btn primary lg" href="#precio">Ver el plan</a><a class="btn lg" data-wa href="#">Hablar por WhatsApp</a></div>
+      </div>
+      <div class="mock" aria-hidden="true">
+        <div class="head"><b>Hoy · Barbería Don Pedro</b><span class="badge confirmed">4 turnos</span></div>
+        <div class="it"><time>10:00</time><span>Lucas M.<small>Corte + barba</small></span><span class="badge done">Atendido</span></div>
+        <div class="it"><time>11:30</time><span>Matías R.<small>Corte clásico</small></span><span class="badge confirmed">Confirmado</span></div>
+        <div class="it"><time>15:00</time><span>Nico F.<small>Reserva web</small></span><span class="badge pending">Pendiente</span></div>
+        <div class="it"><time>16:30</time><span>Santi P.<small>Degradé</small></span><span class="badge pending">Pendiente</span></div>
+      </div>
+    </div></section>
+
+    <section><div class="wrap">
+      <h2 class="sec-h reveal">Todo lo que necesitás para <em style="font-style:normal;color:var(--lime)">organizarte</em></h2>
+      <div class="feat">
+        <div class="card reveal"><div class="ic">1</div><h3>Link de reservas propio</h3><p>Tus clientes eligen día y horario libre. Sin llamadas ni mensajes cruzados.</p></div>
+        <div class="card reveal"><div class="ic">2</div><h3>Panel de turnos</h3><p>Hoy, agenda de los próximos días, confirmaciones y cancelaciones en un toque.</p></div>
+        <div class="card reveal"><div class="ic">3</div><h3>WhatsApp integrado</h3><p>Confirmá o recordá cada turno con un mensaje ya escrito.</p></div>
+        <div class="card reveal"><div class="ic">4</div><h3>Base de clientes</h3><p>Quién viene, cuántas veces y cuándo fue la última. Todo ordenado.</p></div>
+      </div>
+    </div></section>
+
+    <section id="precio"><div class="wrap price-wrap">
+      <div class="price reveal">
+        <h3>Plan Agendo</h3>
+        <p class="amount"><span data-price>$25.000</span> <small>/ mes</small></p>
+        <ul><li>Turnos y clientes ilimitados</li><li>Link de reservas para tu negocio</li><li>Panel de gestión en el celular</li><li>Soporte por WhatsApp</li><li><span data-trial>14</span> días de prueba gratis</li></ul>
+        <a class="btn lg" data-wa href="#">Quiero probarlo</a>
+      </div>
+    </div></section>
+
+    <section><div class="wrap" style="max-width:760px">
+      <h2 class="sec-h reveal">Preguntas frecuentes</h2>
+      <details><summary>¿Tengo que instalar algo?</summary><p>No. Funciona desde el navegador del celular o la computadora.</p></details>
+      <details><summary>¿Cómo pago?</summary><p>Por transferencia o link de Mercado Pago, una vez por mes. Si te atrasás tenés unos días de gracia antes de que se pause la cuenta.</p></details>
+      <details><summary>¿Puedo cancelar cuando quiera?</summary><p>Sí. No hay permanencia mínima. Tus datos quedan guardados por si volvés.</p></details>
+      <details><summary>¿Mis clientes necesitan una cuenta?</summary><p>No. Reservan con su nombre y WhatsApp.</p></details>
+    </div></section>
+  </main>
+
+  <footer><div class="wrap"><span>© Agendo</span><a href="/app">Ingresar a mi agenda</a></div></footer>
+
+  <script type="module">
+    import { waLink } from '/js/common.js';
+    const cfg = await (await fetch('/api/config')).json();
+    document.querySelectorAll('[data-price]').forEach((e) => (e.textContent = '$' + cfg.price.toLocaleString('es-AR')));
+    document.querySelectorAll('[data-trial]').forEach((e) => (e.textContent = cfg.trialDays));
+    document.querySelectorAll('[data-wa]').forEach((e) => { e.href = waLink(cfg.whatsapp, 'Hola! Quiero probar Agendo para mi negocio'); e.target = '_blank'; e.rel = 'noopener'; });
+    const io = new IntersectionObserver((es) => es.forEach((en) => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } }), { rootMargin: '0px 0px -8% 0px' });
+    document.querySelectorAll('.reveal').forEach((e) => io.observe(e));
+  </script>
+</body>
+</html>
