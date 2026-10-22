@@ -15,7 +15,10 @@ Hecho sobre la base de proyectos `carpeta-base`: **Node.js + Express 5 + EJS + S
 
 **Panel del cliente (`/app`)** — lo que ve cada negocio:
 - Turnos de hoy, agenda de 14 días, reservas web por confirmar y base de clientes.
-- Ajustes de días, horarios, duración de turnos y servicios.
+- **Servicios y categorías propios** (ej: "Cortes", "Barba", "Combos"), cada uno con precio, duración y descripción. Se muestran en su link de reservas.
+- Los horarios libres se ajustan a la duración: un servicio de 60 min ocupa dos casilleros de 30.
+- Ingresos del mes (turnos atendidos y por atender) y gasto de cada cliente.
+- Ajustes de días de atención, horario, duración de los casilleros y WhatsApp del negocio.
 - Su link público de reservas `/b/<negocio>` y el estado de su suscripción con botón de pago.
 
 **Landing (`/`)** para vender el servicio.
