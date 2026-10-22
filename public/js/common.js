@@ -33,11 +33,9 @@ export const waNumber = (raw) => {
 export const waLink = (phone, text) => `https://wa.me/${waNumber(phone)}?text=${encodeURIComponent(text)}`;
 
 export async function api(path, opts = {}) {
-  let token = '';
-  try { token = localStorage.getItem('token') || ''; } catch {}
   const res = await fetch(path, {
     ...opts,
-    headers: { 'Content-Type': 'application/json', 'x-token': token, ...(opts.headers || {}) },
+    headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
     body: opts.body ? JSON.stringify(opts.body) : undefined,
   });
   const data = await res.json().catch(() => ({}));

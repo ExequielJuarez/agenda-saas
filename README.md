@@ -1,6 +1,8 @@
-﻿# Agendo — micro-app de turnos por suscripción
+# Agendo — micro-app de turnos por suscripción
 
 Sistema para ofrecer una agenda de turnos como servicio: **vos cobrás una suscripción mensual** ($25.000 por defecto) y cada cliente tiene su propio panel.
+
+Hecho sobre la base de proyectos `carpeta-base`: **Node.js + Express 5 + EJS + Sequelize + MySQL**, sesiones con `express-session`, contraseñas con `bcryptjs` y validaciones con `express-validator`.
 
 ## Qué incluye
 
@@ -8,7 +10,7 @@ Sistema para ofrecer una agenda de turnos como servicio: **vos cobrás una suscr
 - Ingreso mensual recurrente (MRR), cobrado del mes, histórico, por cobrar y clientes en prueba.
 - Gráfico de ingresos de los últimos 6 meses.
 - Tabla de clientes con estado (al día, prueba, vencido, bloqueado, suspendido) y vencimiento.
-- Registrar cobros (suma 1 mes y reactiva la cuenta), crear/editar clientes, suspender, eliminar.
+- Registrar cobros (suma 1 mes y reactiva la cuenta), crear y editar clientes, suspender, eliminar.
 - Link de pago por cliente (Mercado Pago u otro) y link de reservas para copiar.
 
 **Panel del cliente (`/app`)** — lo que ve cada negocio:
@@ -26,10 +28,42 @@ Sistema para ofrecer una agenda de turnos como servicio: **vos cobrás una suscr
 
 Los cobros se registran a mano; no hay cobro automático con tarjeta. Se puede sumar la API de Mercado Pago después.
 
-## Cómo correrlo
+## Estructura
 
-```bash
-OWNER_PASSWORD="tu-clave-segura" node server.js
+```
+src/
+  app.js                    servidor Express
+  config/agendo.js          precio, días de prueba y gracia, tu WhatsApp
+  model/database/           configuración de Sequelize y modelos (Negocio, Pago, Turno)
+  routes/                   index, owner y app
+  controllers/              dueño, clientes y reservas públicas
+  services/                 suscripciones, cobros, métricas y horarios libres
+  middlewares/              sesiones, suscripción activa y validación
+  views/                    EJS: landing, panel del dueño, panel del cliente y reservas
+public/                     CSS y JS del navegador
+database/instalar.js        crea la base y las tablas
 ```
 
-Abrí http://localhost:3000. Precio, días de prueba, gracia y tu WhatsApp se editan en `config.json`. Requiere Node.js 18+, sin dependencias; los datos van a `data/db.json` (necesita almacenamiento persistente al publicarlo).
+## Cómo correrlo
+
+1. Tené MySQL o MariaDB encendido (por ejemplo, con XAMPP).
+2. Instalá las dependencias:
+
+```bash
+npm install
+```
+
+3. Copiá `.env.example` como `.env` y completá `DB_PASSWORD`, `SESSION_SECRET` y `OWNER_PASSWORD` (la contraseña de tu panel).
+4. Creá la base y las tablas:
+
+```bash
+npm run db:instalar
+```
+
+5. Iniciá el servidor:
+
+```bash
+npm start
+```
+
+Abrí http://localhost:3000, entrá a `/owner` con tu `OWNER_PASSWORD` y creá tu primer cliente. Precio, días de prueba, gracia y tu WhatsApp se editan en `src/config/agendo.js`.

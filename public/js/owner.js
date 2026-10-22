@@ -7,11 +7,10 @@ const STATE = { active: 'Al día', trial: 'Prueba', overdue: 'Vencido', blocked:
 const fmtDate = (s) => { const d = parse(s); return `${d.getDate()} ${MONTHS[d.getMonth()].slice(0, 3)} ${d.getFullYear()}`; };
 const st = { data: null, tab: 'clients' };
 
-const logout = () => { try { localStorage.removeItem('owner-token'); } catch {} showLogin(); };
+const logout = async () => { try { await api('/api/owner/logout', { method: 'POST' }); } catch {} showLogin(); };
 const call = async (path, opts) => {
-  let token = ''; try { token = localStorage.getItem('owner-token') || ''; } catch {}
-  try { return await api(path, { ...opts, headers: { 'x-token': token } }); }
-  catch (e) { if (e.status === 401) { logout(); } else toast(e.message); throw e; }
+  try { return await api(path, opts); }
+  catch (e) { if (e.status === 401) { showLogin(); } else toast(e.message); throw e; }
 };
 const load = async () => { st.data = await call('/api/owner/overview'); render(); };
 
@@ -21,8 +20,7 @@ function showLogin(msg) {
   app.replaceChildren(h('main', { class: 'login' }, h('form', { class: 'card login-card form', onsubmit: async (e) => {
     e.preventDefault();
     try {
-      const { token } = await api('/api/owner/login', { method: 'POST', body: { password: pw.value } });
-      try { localStorage.setItem('owner-token', token); } catch {}
+      await api('/api/owner/login', { method: 'POST', body: { password: pw.value } });
       load();
     } catch (ex) { err.textContent = ex.message; pw.select(); }
   } },

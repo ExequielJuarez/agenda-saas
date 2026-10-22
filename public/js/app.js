@@ -8,11 +8,10 @@ const SUB = { active: 'Al día', trial: 'Prueba gratis', overdue: 'Vencida', blo
 const today = ymd(new Date());
 const st = { me: null, stats: null, appts: [], tab: 'today', sel: today, usable: true };
 
-const logout = () => { try { localStorage.removeItem('app-token'); } catch {} showLogin(); };
+const logout = async () => { try { await api('/api/app/logout', { method: 'POST' }); } catch {} st.me = null; showLogin(); };
 const call = async (path, opts) => {
-  let token = ''; try { token = localStorage.getItem('app-token') || ''; } catch {}
-  try { return await api(path, { ...opts, headers: { 'x-token': token } }); }
-  catch (e) { if (e.status === 401) logout(); else if (e.status === 402) { st.usable = false; render(); } else toast(e.message); throw e; }
+  try { return await api(path, opts); }
+  catch (e) { if (e.status === 401) showLogin(); else if (e.status === 402) { st.usable = false; render(); } else toast(e.message); throw e; }
 };
 
 async function load() {
@@ -34,8 +33,7 @@ function showLogin(msg) {
   app.replaceChildren(h('main', { class: 'login' }, h('form', { class: 'card login-card form', onsubmit: async (e) => {
     e.preventDefault();
     try {
-      const { token } = await api('/api/app/login', { method: 'POST', body: { email: email.value, password: pw.value } });
-      try { localStorage.setItem('app-token', token); } catch {}
+      await api('/api/app/login', { method: 'POST', body: { email: email.value, password: pw.value } });
       await load();
     } catch (ex) { err.textContent = ex.message; }
   } },

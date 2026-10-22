@@ -1,9 +1,28 @@
 {
-  "name": "agenda-saas",
-  "version": "1.0.0",
-  "private": true,
-  "type": "module",
-  "description": "Agendo: micro-app de turnos por suscripción mensual, con panel del dueño y panel por cliente",
-  "scripts": { "start": "node server.js" },
-  "engines": { "node": ">=18" }
+    "name":  "agenda-saas",
+    "version":  "1.0.0",
+    "private":  true,
+    "main":  "src/app.js",
+    "scripts":  {
+                    "start":  "node src/app.js",
+                    "dev":  "nodemon src/app.js",
+                    "db:instalar":  "node database/instalar.js"
+                },
+    "dependencies":  {
+                         "bcryptjs":  "^3.0.3",
+                         "dotenv":  "^17.4.2",
+                         "ejs":  "^3.1.10",
+                         "express":  "^5.1.0",
+                         "express-session":  "^1.19.0",
+                         "express-validator":  "^7.3.2",
+                         "method-override":  "^3.0.0",
+                         "multer":  "^2.1.1",
+                         "mysql2":  "^3.22.2",
+                         "node-cron":  "^4.5.0",
+                         "sequelize":  "^6.37.8"
+                     },
+    "devDependencies":  {
+                            "nodemon":  "^3.1.14"
+                        },
+    "license":  "ISC"
 }
